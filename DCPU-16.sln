@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DCPU-16", "0x10c\DCPU-16.csproj", "{B7933DE0-B761-4C19-BFEE-574072FC070D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B7933DE0-B761-4C19-BFEE-574072FC070D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7933DE0-B761-4C19-BFEE-574072FC070D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7933DE0-B761-4C19-BFEE-574072FC070D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7933DE0-B761-4C19-BFEE-574072FC070D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
