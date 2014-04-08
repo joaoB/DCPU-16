@@ -8,20 +8,28 @@ namespace _0x10c
 {
    public class Processor
     {
-       public delegate bool Action(int source);
+       public delegate bool Action(ref UInt16 destination, UInt16 source);
 
        public Dictionary<int, Action> Actions { get; private set; }
 
        public int Accumulator;
-       public int[] Memory { get; private set; }
+       public UInt16[] Memory { get; private set; }
        public int MemorySize { get; private set; }
        public int InstructionPointer { get; private set; }
 
+       enum reg_index { A, B, C, X, Y, Z, I, J, PC, SP, EX };
+       // List of basic instructions. Chosen by the value of "o":
+        enum basicInstructions { nbi,SET,ADD,SUB,MUL,DIV,MOD,SHL,SHR,AND,BOR,XOR,IFE,IFN,IFG,IFB };
+        // List of non-basic instructions (nbi), chosen by the value of "aa":
+        enum nonbasicInstructions { JSR = 0x11 };
+
+       UInt16[] reg { get; private set; }
 
        public Processor(int memorySize)
        {
            MemorySize = memorySize;
-           Memory = new int[MemorySize];
+           Memory = new UInt16[MemorySize];
+           reg = new UInt16[11];
 
            Actions = new Dictionary<int, Action>
                           {
@@ -60,122 +68,177 @@ namespace _0x10c
                           };
        }
 
-
-       public bool SET(int source)
+       public bool SET(ref UInt16 destination, UInt16 source)
        {
+           destination = source;
            return true;
        }
 
-       public bool ADD(int source)
+       public bool ADD(ref UInt16 destination, UInt16 source)
        {
+
            return true;
        }
 
-       public bool SUB(int source)
-       {
-           return true;
-       }
-
-       public bool MUL(int source)
+       public bool SUB(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
 
-       public bool MLI(int source)
+       public bool MUL(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool DIV(int source)
+
+       public bool MLI(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool DVI(int source)
+       public bool DIV(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool MOD(int source)
+       public bool DVI(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool MDI(int source)
+
+       public bool MOD(ref UInt16 destination, UInt16 source)
+       {
+           if (source != 0)
+           {
+               destination = (UInt16)(destination % source);
+           }
+           else{
+               destination = 0;
+           }
+           return true;
+       }
+
+       public bool MDI(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool AND(int source)
+
+       public bool AND(ref UInt16 destination, UInt16 source)
+       {
+           destination &= source;
+           return true;
+       }
+
+       public bool BOR(ref UInt16 destination, UInt16 source)
+       {
+           destination |= source;
+           return true;
+       }
+
+       public bool XOR(ref UInt16 destination, UInt16 source)
+       {
+           destination ^= source;
+           return true;
+       }
+
+       public bool SHR(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool BOR(int source)
+       public bool ASR(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool XOR(int source)
+       public bool SHL(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool SHR(int source)
+       public bool IFB(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool ASR(int source)
+       public bool IFC(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool SHL(int source)
+       public bool IFE(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool IFB(int source)
+       public bool IFN(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool IFC(int source)
+       public bool IFG(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool IFE(int source)
+       public bool IFA(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool IFN(int source)
+       public bool IFL(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool IFG(int source)
+       public bool IFU(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool IFA(int source)
+       public bool ADX(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool IFL(int source)
+       public bool SBX(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool IFU(int source)
+       public bool STI(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool ADX(int source)
+       public bool STD(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool SBX(int source)
+       public bool RESERVED(ref UInt16 destination, UInt16 source)
        {
            return true;
        }
-       public bool STI(int source)
-       {
-           return true;
+
+       public void op() {
+           reg_index _pc = reg_index.PC;
+
+           UInt16 v = Memory[reg[(UInt16)_pc]++];
+           // Instruction format: bbbbbb aaaaaa oooo
+           UInt16 o = (UInt16)(v & 0x0F);
+           UInt16 aa = (UInt16)((v >> 4) & 0x3F);
+           UInt16 bb = (UInt16)((v >> 10) & 0x3F);
+
+           // Parse the two parameters. (Note: "a" is skipped when nbi.)
+
+           //UInt16 a = o == (UInt16)basicInstructions.nbi ? v : value<skipping>(aa); 
+           //UInt32 wa = a;
+           //UInt16 b = value<skipping>(bb); 
+           //UInt32 wr;
+
+           UInt16 _instruction = (UInt16)(o == (UInt16)basicInstructions.nbi ? aa + 0x10 : o);
+
+           Action _action = new Action(Actions[_instruction]);
+           _action(ref aa, bb);
        }
-       public bool STD(int source)
+
+
+      
+     /*  unsafe UInt16* value(ref UInt16 v, int skipping)
        {
-           return true;
-       }
-       public bool RESERVED(int source)
-       {
-           return true;
-       }
+
+           switch (((v & (UInt16)0x38) == 0x18) ? (v & 7) ^ skipping : 8 + v / 8)
+           { 
+            
+               default: return (UInt16)0;
+           }
+
+           return 0;
+        }*/
+   
+  
  }
 }
