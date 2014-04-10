@@ -35,7 +35,9 @@ namespace _0x10c
     {
        public delegate bool Action(ref UInt16 destination, UInt16 source);
 
-       public Dictionary<int, Action> Actions { get; private set; }
+       public delegate void Operation(operand a, operand b);
+
+       public Dictionary<int, Operation> Actions { get; private set; }
 
        public int Accumulator;
        public UInt16[] Memory { get; private set; }
@@ -143,6 +145,73 @@ namespace _0x10c
        public ushort IA { get { return _IA; } }
        public ushort RAM(uint addr) { return _RAM[addr]; }
 
+       private static int[] _basicCycleCost = {
+                                                   0,
+                                                   1,
+                                                   2,
+                                                   2,
+                                                   2,
+                                                   2,
+                                                   3,
+                                                   3,
+                                                   3,
+                                                   3,
+                                                   1,
+                                                   1,
+                                                   1,
+                                                   1,
+                                                   1,
+                                                   1,
+                                                   2,
+                                                   2,
+                                                   2,
+                                                   2,
+                                                   2,
+                                                   2,
+                                                   2,
+                                                   2,
+                                                   0,
+                                                   0,
+                                                   3,
+                                                   3,
+                                                   0,
+                                                   0,
+                                                   2,
+                                                   2 };
+       private static int[] _specialCycleCost = {
+                                                   0,
+                                                   3,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   4,
+                                                   1,
+                                                   1,
+                                                   3,
+                                                   2,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   2,
+                                                   4,
+                                                   4,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0,
+                                                   0 };
+
        public void Reset()
        {
            for (int i = 0; i < RegisterCount; _Register[i++] = 0) ;
@@ -209,9 +278,162 @@ namespace _0x10c
        private void parseSkippedOperand(ushort value)
        { 
        //TODO
+           if (value < 0x08) //Register
+               return;
+           if (value < 0x10) //[Register]
+               return;
+           if (value < 0x18)
+           { //[next word + register]
+               nextWord();
+               return;
+           }
+
+           if (value > 0x1f) // literal 0x00 - 0x1f
+               return;
+
+           switch (value)
+           {
+               case 0x18: //PUSH
+                   return;
+               case 0x19: //PEEK
+                   return;
+               case 0x1a: //PICK n
+                   nextWord();
+                   return;
+               case 0x1b: //SP
+                   return;
+               case 0x1c: //PC
+                   return;
+               case 0x1d: //O
+                   return;
+               case 0x1e: //[next word]
+                   nextWord();
+                   return;
+               case 0x1f: //next word (literal)
+                   nextWord();
+                   return;
+           }
        }
+
+       private int operandCycles(ushort value)
+       {
+           if (value > 0x09 && value < 0x18) //[next word + register]
+               return 1;
+           switch (value)
+           {
+               case 0x1a: //PICK n
+                   return 1;
+               case 0x1e: //[next word]
+                   return 1;
+               case 0x1f: //next word (literal)
+                   return 1;
+           }
+           return 0;
+       }
+
+       private operand parseOperand(ushort value)
+       {
+           if (value < 0x08) //Register
+               return new operand(operand.REG, value);
+           if (value < 0x10) //[Register]
+               return new operand(operand.RAM, _Register[value - 0x08]);
+           if (value < 0x18) //[next word + register]
+               return new operand(operand.RAM, (ushort)(_Register[value - 0x10] + nextWord()));
+           if (value > 0x1f) // literal 0x00 - 0x1f
+               return new operand(operand.LIT, (ushort)(value - 0x21));
+           switch (value)
+           {
+               case 0x18: //PUSH
+                   return new operand(operand.STK, 0);
+               case 0x19: //PEEK
+                   return new operand(operand.RAM, _SP);
+               case 0x1a: //PICK n
+                   return new operand(operand.RAM, (ushort)(_SP + nextWord()));
+               case 0x1b: //SP
+                   return new operand(operand.SP, 0);
+               case 0x1c: //PC
+                   return new operand(operand.PC, 0);
+               case 0x1d: //EX
+                   return new operand(operand.EX, 0);
+               case 0x1e: //[next word]
+                   return new operand(operand.RAM, nextWord());
+               case 0x1f: //next word (literal)
+                   return new operand(operand.LIT, nextWord());
+           }
+           throw new Exception("Invalid parseOperand" + value.ToString("X4"));
+       }
+
+       private int opcodeCycles(ushort special, ushort opcode)
+       {
+           if (opcode == 0)
+               return _specialCycleCost[special];
+           else
+               return _basicCycleCost[opcode];
+       }
+
        private void Tick() { 
        //TODO
+
+           _Cycles++;
+
+
+           if (_state == ProcessorState.newInst)
+           {
+               Tick_inst = nextWord();
+               Tick_opcode = (ushort)(Tick_inst & (ushort)0x001fu);
+               Tick_b = (ushort)((Tick_inst & (ushort)0x03e0u) >> 5);
+               Tick_a = (ushort)((Tick_inst & (ushort)0xfc00u) >> 10);
+               _state = ProcessorState.readOpA;
+               _CycleDebt = operandCycles(Tick_a);
+               if (_CycleDebt > 0) return;
+           }
+
+           if (_state == ProcessorState.readOpA)
+           {
+               Tick_opA = parseOperand(Tick_a);
+               if (Tick_opcode == 0) // Non-basic opcodes
+               {
+                   _state = ProcessorState.executeInst;
+               }
+               else
+               {
+                   _CycleDebt = operandCycles(Tick_b);
+                   _state = ProcessorState.readOpB;
+               }
+               if (_CycleDebt > 0) return;
+           }
+
+           if (_state == ProcessorState.readOpB)
+           {
+               Tick_opB = parseOperand(Tick_b);
+               _state = ProcessorState.executeInst;
+               _CycleDebt = opcodeCycles(Tick_a, Tick_opcode);
+               if (_CycleDebt > 0) return;
+           }
+
+           if (_state == ProcessorState.executeInst)
+           {
+               if (Tick_opcode == 0) // Non-basic opcodes
+               {
+                   /*
+                    * JSR
+                    * INT
+                    * IAG
+                    * IAS
+                    * RFI
+                    * IAQ
+                    * HWN
+                    */
+                  // switch (Tick_b)
+               }
+               else // Basic opcodes
+               {
+                   Operation _operation = new Operation(Actions[Tick_opcode]);
+                   _operation(Tick_opB, Tick_opA);           
+               }
+               _state = ProcessorState.newInst;
+               return;
+           }
        }
        
 
@@ -234,7 +456,9 @@ namespace _0x10c
 
        }
 
-       private ushort nextWord() { return _RAM[_PC++]; }
+       private ushort nextWord() { 
+           return _RAM[_PC++]; 
+       }
 
 
        private ushort readValue(operand op)
@@ -314,44 +538,44 @@ namespace _0x10c
            Memory = new UInt16[MemorySize];
            reg = new UInt16[11];
 
-           Actions = new Dictionary<int, Action>
+           Actions = new Dictionary<int, Operation>
                           {
-                              {0x01, SET},
-                              {0x02, ADD},
-                              {0x03, SUB},
-                              {0x04, MUL},
-                              {0x05, MLI},
-                              {0x06, DIV},
-                              {0x07, DVI},
-                              {0x08, MOD},
-                              {0x09, MDI},
-                              {0x0a, AND},
-                              {0x0b, BOR},
-                              {0x0c, XOR},
-                              {0x0d, SHR},
-                              {0x0e, ASR},
-                              {0x0f, SHL},
-                              {0x10, IFB},
-                              {0x11, IFC},
-                              {0x12, IFE},
-                              {0x13, IFN},
-                              {0x14, IFG},
-                              {0x15, IFA},
-                              {0x16, IFL},
-                              {0x17, IFU},
-                              {0x18, RESERVED},
-                              {0x19, RESERVED},
-                              {0x1a, ADX},
-                              {0x1b, SBX},
-                              {0x1c, RESERVED},
-                              {0x1d, RESERVED},
-                              {0x1e, STI},
-                              {0x1f, STD}
+                              {0x01, opSET},
+                              {0x02, opADD},
+                              {0x03, opSUB},
+                              {0x04, opMUL},
+                              {0x05, opMLI},
+                              {0x06, opDIV},
+                              {0x07, opDVI},
+                              {0x08, opMOD},
+                            //  {0x09, opMDI},
+                              {0x0a, opAND},
+                              {0x0b, opBOR},
+                              {0x0c, opXOR},
+                              {0x0d, opSHR},
+                              {0x0e, opASR},
+                              {0x0f, opSHL}
+                             // {0x10, opIFB},
+                              //{0x11, opIFC},
+                              //{0x12, opIFE},
+                              //{0x13, opIFN},
+                              //{0x14, opIFG},
+                              //{0x15, opIFA},
+                              //{0x16, opIFL},
+                              //{0x17, opIFU},
+                              //{0x18, opRESERVED},
+                              //{0x19, opRESERVED},
+                              //{0x1a, opADX},
+                              //{0x1b, opSBX},
+                              //{0x1c, opRESERVED},
+                              //{0x1d, opRESERVED},
+                              //{0x1e, opSTI},
+                              //{0x1f, opSTD}
 
                           };
        }
 
-       public bool SET(ref UInt16 destination, UInt16 source)
+    /*   public bool SET(ref UInt16 destination, UInt16 source)
        {
            destination = source;
            return true;
@@ -538,22 +762,142 @@ namespace _0x10c
 
            Action _action = new Action(Actions[_instruction]);
            _action(ref aa, bb);
+       }*/
+
+
+       private void opSET(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           writeValue(b, _a);
+       }
+
+       private void opADD(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           writeValue(b, (ushort)(_b + _a));
+           if ((_b + _a) > 0xffff) _EX = (ushort)0x0001u;
+       }
+
+       private void opSUB(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           writeValue(b, (ushort)(_b - _a));
+           if ((_b - _a) < 0) _EX = (ushort)0xffffu;
+       }
+
+       private void opMUL(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           writeValue(b, (ushort)(_b * _a));
+           _EX = (ushort)(((_b * _a) >> 16) & 0xffff);
+       }
+
+       private void opMLI(operand b, operand a)
+       {
+           short _a = (short)readValue(a);
+           short _b = (short)readValue(b);
+           writeValue(b, (ushort)(_b * _a));
+           _EX = (ushort)(((_b * _a) >> 16) & 0xffff);
+       }
+
+       private void opDIV(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           if (_a == 0)
+           {
+               writeValue(b, 0);
+           }
+           else
+           {
+               writeValue(b, (ushort)(_b / _a));
+               _EX = (ushort)(((_b << 16) / _a) & 0xffff);
+           }
+       }
+
+       private void opDVI(operand b, operand a)
+       {
+           short _a = (short)readValue(a);
+           short _b = (short)readValue(b);
+           if (_a == 0)
+           {
+               writeValue(b, 0);
+           }
+           else
+           {
+               writeValue(b, (ushort)(_b / _a));
+               _EX = (ushort)(((_b << 16) / _a) & 0xffff);
+           }
+       }
+
+       private void opMOD(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           if (_a == 0)
+           {
+               writeValue(b, 0);
+           }
+           else
+           {
+               writeValue(b, (ushort)(_a % _b));
+           }
+       }
+
+       private void opAND(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           writeValue(b, (ushort)(_b & _a));
+       }
+
+       private void opBOR(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           writeValue(b, (ushort)(_b | _a));
+       }
+
+       private void opXOR(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           writeValue(b, (ushort)(_b ^ _a));
+       }
+
+       private void opSHR(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           writeValue(b, (ushort)(_b >> _a));
+           _EX = (ushort)(((_b << 16) >> _a) & 0xffff);
+       }
+
+       private void opASR(operand b, operand a)
+       {
+           short _a = (short)readValue(a);
+           short _b = (short)readValue(b);
+           writeValue(b, (ushort)(_b >> _a));
+           _EX = (ushort)(((_b << 16) >> _a) & 0xffff);
+       }
+
+       private void opSHL(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           writeValue(b, (ushort)(_b << _a));
+           _EX = (ushort)(((_b << _a) >> 16) & 0xffff);
        }
 
 
-      
-     /*  unsafe UInt16* value(ref UInt16 v, int skipping)
-       {
 
-           switch (((v & (UInt16)0x38) == 0x18) ? (v & 7) ^ skipping : 8 + v / 8)
-           { 
-            
-               default: return (UInt16)0;
-           }
 
-           return 0;
-        }*/
-   
+
+
   
  }
 }
