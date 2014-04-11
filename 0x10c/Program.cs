@@ -14,9 +14,17 @@ namespace _0x10c
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles();
+            Console.WriteLine("aasd");
+            /*Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            Application.Run(new Form1());*/
+
+            Processor p = new Processor();
+            
+            
+            p.Step();            
+            Console.Read();
+
         }
     }
 }

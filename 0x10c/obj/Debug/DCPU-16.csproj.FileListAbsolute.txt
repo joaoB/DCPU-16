@@ -1,2 +1,8 @@
 C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\bin\Debug\0x10c.exe.config
 C:\Users\ist170038\Desktop\ave\DCPU-16\0x10c\bin\Debug\0x10c.exe.config
+C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\obj\Debug\_0x10c.Properties.Resources.resources
+C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\obj\Debug\DCPU-16.csproj.GenerateResource.Cache
+C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\bin\Debug\0x10c.exe
+C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\bin\Debug\0x10c.pdb
+C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\obj\Debug\0x10c.exe
+C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\obj\Debug\0x10c.pdb

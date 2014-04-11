@@ -37,7 +37,7 @@ namespace _0x10c
 
        public delegate void Operation(operand a, operand b);
 
-       public Dictionary<int, Operation> Actions { get; private set; }
+       public Dictionary<ushort, Operation> Actions { get; private set; }
 
        public int Accumulator;
        public UInt16[] Memory { get; private set; }
@@ -50,7 +50,7 @@ namespace _0x10c
         // List of non-basic instructions (nbi), chosen by the value of "aa":
         enum nonbasicInstructions { JSR = 0x11 };
 
-       UInt16[] reg { get; private set; }
+        UInt16[] reg { get; set; }
 
        private ushort[] _RAM;
        private const uint RAMSize = 0x10000u;
@@ -85,9 +85,46 @@ namespace _0x10c
             _RAM = new ushort[RAMSize];
             _Register = new ushort[RegisterCount];
             _IntQueue = new Queue<ushort>();
+
             
-           ClearMemory();
+
+          ClearMemory();
             Reset();
+            Actions = new Dictionary<ushort, Operation>
+                          {
+                              {0x01, opSET},
+                              {0x02, opADD},
+                              {0x03, opSUB},
+                              {0x04, opMUL},
+                              {0x05, opMLI},
+                              {0x06, opDIV},
+                              {0x07, opDVI},
+                              {0x08, opMOD},
+                            //  {0x09, opMDI},
+                              {0x0a, opAND},
+                              {0x0b, opBOR},
+                              {0x0c, opXOR},
+                              {0x0d, opSHR},
+                              {0x0e, opASR},
+                              {0x0f, opSHL}
+                             // {0x10, opIFB},
+                              //{0x11, opIFC},
+                              //{0x12, opIFE},
+                              //{0x13, opIFN},
+                              //{0x14, opIFG},
+                              //{0x15, opIFA},
+                              //{0x16, opIFL},
+                              //{0x17, opIFU},
+                              //{0x18, opRESERVED},
+                              //{0x19, opRESERVED},
+                              //{0x1a, opADX},
+                              //{0x1b, opSBX},
+                              //{0x1c, opRESERVED},
+                              //{0x1d, opRESERVED},
+                              //{0x1e, opSTI},
+                              //{0x1f, opSTD}
+
+                          };
         }
 
        public string RegToString()
@@ -376,7 +413,6 @@ namespace _0x10c
 
            _Cycles++;
 
-
            if (_state == ProcessorState.newInst)
            {
                Tick_inst = nextWord();
@@ -428,8 +464,9 @@ namespace _0x10c
                }
                else // Basic opcodes
                {
-                   Operation _operation = new Operation(Actions[Tick_opcode]);
-                   _operation(Tick_opB, Tick_opA);           
+                   new Operation(Actions[Tick_opcode]).Invoke(Tick_opB, Tick_opA);
+                   
+                           
                }
                _state = ProcessorState.newInst;
                return;
@@ -456,7 +493,8 @@ namespace _0x10c
 
        }
 
-       private ushort nextWord() { 
+       private ushort nextWord() {
+
            return _RAM[_PC++]; 
        }
 
@@ -538,41 +576,7 @@ namespace _0x10c
            Memory = new UInt16[MemorySize];
            reg = new UInt16[11];
 
-           Actions = new Dictionary<int, Operation>
-                          {
-                              {0x01, opSET},
-                              {0x02, opADD},
-                              {0x03, opSUB},
-                              {0x04, opMUL},
-                              {0x05, opMLI},
-                              {0x06, opDIV},
-                              {0x07, opDVI},
-                              {0x08, opMOD},
-                            //  {0x09, opMDI},
-                              {0x0a, opAND},
-                              {0x0b, opBOR},
-                              {0x0c, opXOR},
-                              {0x0d, opSHR},
-                              {0x0e, opASR},
-                              {0x0f, opSHL}
-                             // {0x10, opIFB},
-                              //{0x11, opIFC},
-                              //{0x12, opIFE},
-                              //{0x13, opIFN},
-                              //{0x14, opIFG},
-                              //{0x15, opIFA},
-                              //{0x16, opIFL},
-                              //{0x17, opIFU},
-                              //{0x18, opRESERVED},
-                              //{0x19, opRESERVED},
-                              //{0x1a, opADX},
-                              //{0x1b, opSBX},
-                              //{0x1c, opRESERVED},
-                              //{0x1d, opRESERVED},
-                              //{0x1e, opSTI},
-                              //{0x1f, opSTD}
-
-                          };
+           
        }
 
     /*   public bool SET(ref UInt16 destination, UInt16 source)
@@ -774,6 +778,7 @@ namespace _0x10c
 
        private void opADD(operand b, operand a)
        {
+
            ushort _a = readValue(a);
            ushort _b = readValue(b);
            writeValue(b, (ushort)(_b + _a));
