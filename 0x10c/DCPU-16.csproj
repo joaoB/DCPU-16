@@ -63,11 +63,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Executor.cs" />
-    <Compile Include="Forms\Form1.cs">
+    <Compile Include="Forms\BasicCalculator.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="Forms\BasicCalculator.Designer.cs">
+      <DependentUpon>BasicCalculator.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\InputForm.cs">
       <SubType>Form</SubType>
@@ -78,6 +78,9 @@
     <Compile Include="Processor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Forms\BasicCalculator.resx">
+      <DependentUpon>BasicCalculator.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\InputForm.resx">
       <DependentUpon>InputForm.cs</DependentUpon>
     </EmbeddedResource>

@@ -91,8 +91,8 @@ namespace _0x10c
           ClearMemory();
             Reset();
             _RAM[0] = 0x841a;
-            _RAM[1] = 0x8419;
-            _RAM[2] = 0x1026;
+           // _RAM[1] = 0x8419;
+            //_RAM[2] = 0x1026;
 
 
           
@@ -131,9 +131,7 @@ namespace _0x10c
                               //{0x1c, opRESERVED},
                               //{0x1d, opRESERVED},
                               {0x1e, opSTI},
-                              {0x1f, opSTD},
-                              {0x20, opREAD}
-
+                              {0x1f, opSTD}
 
                           };
         }
@@ -486,7 +484,6 @@ namespace _0x10c
                }
                else // Basic opcodes
                {
-                   Console.WriteLine("basic");
                    new Operation(Actions[Tick_opcode]).Invoke(Tick_opB, Tick_opA);
                                              
                }
@@ -603,18 +600,16 @@ namespace _0x10c
 
        private void opREAD(operand b, operand a)
        {
-           Console.WriteLine("here");
            var value = Executor.Read();
            Console.WriteLine(value.ToString());
+         
+           ushort _b = readValue(b);
+           writeValue(b, (ushort) value);
 
        }
 
-
        private void opSET(operand b, operand a)
-
        {
-           Console.WriteLine("here 2");
-
            ushort _a = readValue(a);
            ushort _b = readValue(b);
            writeValue(b, _a);

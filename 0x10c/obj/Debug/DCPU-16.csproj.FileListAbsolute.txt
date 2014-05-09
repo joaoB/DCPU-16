@@ -7,3 +7,5 @@ C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\bin\Debug\0x10c.pdb
 C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\obj\Debug\0x10c.exe
 C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\obj\Debug\0x10c.pdb
 C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\obj\Debug\_0x10c.InputForm.resources
+C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\obj\Debug\DCPU-16.csprojResolveAssemblyReference.cache
+C:\Users\Joao Silva\Desktop\ave\DCPU-16\0x10c\obj\Debug\_0x10c.Form1.resources
