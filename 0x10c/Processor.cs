@@ -90,6 +90,12 @@ namespace _0x10c
 
           ClearMemory();
             Reset();
+            _RAM[0] = 0x841a;
+            _RAM[1] = 0x8419;
+            _RAM[2] = 0x1026;
+
+
+          
             Actions = new Dictionary<ushort, Operation>
                           {
                               {0x01, opSET},
@@ -106,23 +112,28 @@ namespace _0x10c
                               {0x0c, opXOR},
                               {0x0d, opSHR},
                               {0x0e, opASR},
-                              {0x0f, opSHL}
-                             // {0x10, opIFB},
-                              //{0x11, opIFC},
-                              //{0x12, opIFE},
-                              //{0x13, opIFN},
-                              //{0x14, opIFG},
-                              //{0x15, opIFA},
-                              //{0x16, opIFL},
-                              //{0x17, opIFU},
-                              //{0x18, opRESERVED},
+                              {0x0f, opSHL},
+                               {0x10, opIFB},
+                              {0x11, opIFC},
+                              {0x12, opIFE},
+                              {0x13, opIFN},
+                              {0x14, opIFG},
+                              {0x15, opIFA},
+                              {0x16, opIFL},
+                              {0x17, opIFU},
+                              //{0x18, opREAD}, 
                               //{0x19, opRESERVED},
+                             
                               //{0x1a, opADX},
-                              //{0x1b, opSBX},
+                              {0x1a, opREAD},
+                              
+                              {0x1b, opSBX},
                               //{0x1c, opRESERVED},
                               //{0x1d, opRESERVED},
-                              //{0x1e, opSTI},
-                              //{0x1f, opSTD}
+                              {0x1e, opSTI},
+                              {0x1f, opSTD},
+                              {0x20, opREAD}
+
 
                           };
         }
@@ -314,7 +325,6 @@ namespace _0x10c
 
        private void parseSkippedOperand(ushort value)
        { 
-       //TODO
            if (value < 0x08) //Register
                return;
            if (value < 0x10) //[Register]
@@ -451,22 +461,34 @@ namespace _0x10c
            {
                if (Tick_opcode == 0) // Non-basic opcodes
                {
-                   /*
-                    * JSR
-                    * INT
-                    * IAG
-                    * IAS
-                    * RFI
-                    * IAQ
-                    * HWN
-                    */
-                  // switch (Tick_b)
+                   //TODO: DICTIONARY
+                   switch (Tick_b)
+                    {
+                        case 0x01:
+                            opJSR(Tick_opA);
+                            break;
+                        case 0x08:
+                            opINT(Tick_opA);
+                            break;
+                        case 0x09:
+                            opIAG(Tick_opA);
+                            break;
+                        case 0x0a:
+                            opIAS(Tick_opA);
+                            break;
+                        case 0x0b:
+                            opRFI(Tick_opA);
+                            break;
+                        case 0x0c:
+                            opIAQ(Tick_opA);
+                            break;
+                    }
                }
                else // Basic opcodes
                {
+                   Console.WriteLine("basic");
                    new Operation(Actions[Tick_opcode]).Invoke(Tick_opB, Tick_opA);
-                   
-                           
+                                             
                }
                _state = ProcessorState.newInst;
                return;
@@ -579,198 +601,20 @@ namespace _0x10c
            
        }
 
-    /*   public bool SET(ref UInt16 destination, UInt16 source)
+       private void opREAD(operand b, operand a)
        {
-           destination = source;
-           return true;
-       }
+           Console.WriteLine("here");
+           var value = Executor.Read();
+           Console.WriteLine(value.ToString());
 
-       public bool ADD(ref UInt16 destination, UInt16 source)
-       {
-           UInt16 wr = (UInt16)(destination + source);
-           destination = wr;
-           reg[(int)reg_index.EX] = (UInt16)(wr >> 16);
-
-           return true;
        }
-
-       public bool SUB(ref UInt16 destination, UInt16 source)
-       {
-           UInt16 wr = (UInt16)(destination - source);
-           destination = wr;
-           reg[(int)reg_index.EX] = (UInt16)(wr >> 16);
-           return true;
-       }
-
-       public bool MUL(ref UInt16 destination, UInt16 source)
-       {
-           UInt16 wr;
-           UInt16 wa = destination;
-
-           wr = (UInt16)(wa * source); 
-           destination = wr;
-           reg[(int)reg_index.EX] = (UInt16)(wr >> 16); 
-           return true;
-       }
-
-       public bool MLI(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool DIV(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool DVI(ref UInt16 destination, UInt16 source)
-       {
-           UInt16 wr;
-           UInt16 wa = destination;
-
-           if (source != 0)
-           {
-               wr = (UInt16)((wa << 16) / source);
-           }
-           else {
-               wr = 0;
-           }
-
-           destination = (UInt16)(wr >> 16);
-           reg[(int)reg_index.EX] = wr;
-
-           return true;
-       }
-
-       public bool MOD(ref UInt16 destination, UInt16 source)
-       {
-           if (source != 0)
-           {
-               destination = (UInt16)(destination % source);
-           }
-           else{
-               destination = 0;
-           }
-           return true;
-       }
-
-       public bool MDI(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-
-       public bool AND(ref UInt16 destination, UInt16 source)
-       {
-           destination &= source;
-           return true;
-       }
-
-       public bool BOR(ref UInt16 destination, UInt16 source)
-       {
-           destination |= source;
-           return true;
-       }
-
-       public bool XOR(ref UInt16 destination, UInt16 source)
-       {
-           destination ^= source;
-           return true;
-       }
-
-       public bool SHR(ref UInt16 destination, UInt16 source)
-       {
-           UInt16 wr;
-           UInt16 wa = destination;
-           wr = (UInt16)((wa << 16) >> source);
-           destination = (UInt16)(wr >> 16); 
-           reg[(int)reg_index.EX] = wr;
-
-           return true;
-       }
-       public bool ASR(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool SHL(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool IFB(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool IFC(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool IFE(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool IFN(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool IFG(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool IFA(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool IFL(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool IFU(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool ADX(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool SBX(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool STI(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool STD(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-       public bool RESERVED(ref UInt16 destination, UInt16 source)
-       {
-           return true;
-       }
-
-       public void op() {
-           reg_index _pc = reg_index.PC;
-
-           UInt16 v = Memory[reg[(UInt16)_pc]++];
-           // Instruction format: bbbbbb aaaaaa oooo
-           UInt16 o = (UInt16)(v & 0x0F);
-           UInt16 aa = (UInt16)((v >> 4) & 0x3F);
-           UInt16 bb = (UInt16)((v >> 10) & 0x3F);
-
-           // Parse the two parameters. (Note: "a" is skipped when nbi.)
-
-           //UInt16 a = o == (UInt16)basicInstructions.nbi ? v : value<skipping>(aa); 
-           //UInt32 wa = a;
-           //UInt16 b = value<skipping>(bb); 
-           //UInt32 wr;
-
-           UInt16 _instruction = (UInt16)(o == (UInt16)basicInstructions.nbi ? aa + 0x10 : o);
-
-           Action _action = new Action(Actions[_instruction]);
-           _action(ref aa, bb);
-       }*/
 
 
        private void opSET(operand b, operand a)
+
        {
+           Console.WriteLine("here 2");
+
            ushort _a = readValue(a);
            ushort _b = readValue(b);
            writeValue(b, _a);
@@ -778,10 +622,12 @@ namespace _0x10c
 
        private void opADD(operand b, operand a)
        {
-
+           
            ushort _a = readValue(a);
            ushort _b = readValue(b);
            writeValue(b, (ushort)(_b + _a));
+           
+           
            if ((_b + _a) > 0xffff) _EX = (ushort)0x0001u;
        }
 
@@ -898,11 +744,176 @@ namespace _0x10c
            _EX = (ushort)(((_b << _a) >> 16) & 0xffff);
        }
 
+       //performs next instruction only if (b&a)!=0
+       private void opIFB(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           if (!((_b & _a) != 0)) skipNext();
+       }
+
+        //performs next instruction only if (b&a)==0
+       private void opIFC(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           if (!((_b & _a) == 0)) skipNext();
+       }
+
+       //performs next instruction only if b==a 
+       private void opIFE(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           if (!(_b == _a)) skipNext();
+       }
+
+       //performs next instruction only if b!=a 
+       private void opIFN(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           if (!(_b != _a)) skipNext();
+       }
+
+       // performs next instruction only if b>a
+       private void opIFG(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           if (!(_b > _a)) skipNext();
+       }
+
+        //performs next instruction only if b>a (signed)
+       private void opIFA(operand b, operand a)
+       {
+           short _a = (short)readValue(a);
+           short _b = (short)readValue(b);
+           if (!(_b > _a)) skipNext();
+       }
+
+       // performs next instruction only if b<a
+       private void opIFL(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           if (!(_b < _a)) skipNext();
+       }
+
+       //performs next instruction only if b<a (signed)
+       private void opIFU(operand b, operand a)
+       {
+           short _a = (short)readValue(a);
+           short _b = (short)readValue(b);
+           if (!(_b < _a)) skipNext();
+       }
+
+       //sets b to b+a+EX, sets EX to 0x0001 if there is an overflow, 0x0 otherwise
+       private void opADX(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           uint v = (uint)(_b + _a + _EX);
+           writeValue(b, (ushort)(v & 0xffffu));
+           if (v > 0x0000ffffu)
+               _EX = (ushort)0x0001u;
+           else 
+               _EX = (ushort)0x0000u;
+       }
+
+
+       //sets b to b-a+EX, sets EX to 0xFFFF if there is an under flow, 0x0001 if there's an overflow, 0x0 otherwise
+       private void opSBX(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           uint v = (uint)(_b - _a + _EX);
+           writeValue(b, (ushort)(v & 0xffffu));
+           if (v > 0x0000ffffu) 
+               _EX = (ushort)0xffffu;
+           else
+               _EX = (ushort)0x0000u;
+       }
+
+       //sets b to a, then increases I and J by 1
+       private void opSTI(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           uint v = (uint)(_b - _a + _EX);
+           writeValue(b, _a);
+           _Register[_I] = (ushort)(_Register[_I] + 0x0001u);
+           _Register[_J] = (ushort)(_Register[_J] + 0x0001u);
+       }
+
+       //sets b to a, then decreases I and J by 1
+       private void opSTD(operand b, operand a)
+       {
+           ushort _a = readValue(a);
+           ushort _b = readValue(b);
+           uint v = (uint)(_b - _a + _EX);
+           writeValue(b, _a);
+           _Register[_I] = (ushort)(_Register[_I] - 0x0001u);
+           _Register[_J] = (ushort)(_Register[_J] - 0x0001u);
+       }
 
 
 
+       /*
+        * NON BASIC OPERATIONS
+        */
+        
+       //pushes the address of the next instruction to the stack, then sets PC to a
+       private void opJSR(operand a)
+       {
+           ushort _a = readValue(a);
+           stackPUSH(_PC);
+           _PC = _a;
+       }
+
+       //triggers a software interrupt with message a
+       private void opINT(operand a)
+       {
+           ushort _a = readValue(a);
+           if (_IA == 0) return;
+           _IntQueue.Enqueue(_a);
+       }
+
+       //sets a to IA 
+       private void opIAG(operand a)
+       {
+           ushort _a = readValue(a);
+           writeValue(a, _IA);
+       }
+
+       //sets IA to a
+       private void opIAS(operand a)
+       {
+           ushort _a = readValue(a);
+           _IA = _a;
+       }
+
+       //disables interrupt queueing, pops A from the stack, then pops PC from the stack
+       private void opRFI(operand a)
+       {
+           ushort _a = readValue(a);
+           _Register[_A] = stackPOP();
+           _PC = stackPOP();
+           _IntEnabled = true;
+       }
 
 
-  
+       /*
+        * if a is nonzero, interrupts will be added to the queue
+        instead of triggered. if a is zero, interrupts will be
+        triggered as normal again
+        */
+
+       private void opIAQ(operand a)
+       {
+           ushort _a = readValue(a);
+           _IntEnabled = (_a == 0);
+       }
+
  }
 }
